@@ -1,17 +1,23 @@
 'use client'
 
-import React, { useState } from 'react';
-import { 
-  Search, Bell, Menu, X, Filter, 
-  LayoutDashboard, FileText, Briefcase, 
-  TrendingUp, Bookmark, Wallet, Settings,
-  Download, Grid, List
+import {
+  Bell,
+  Bookmark,
+  Briefcase,
+  FileText,
+  Grid,
+  LayoutDashboard,
+  List,
+  Menu,
+  Search,
+  TrendingUp,
 } from 'lucide-react';
-
+import { useState } from 'react';
+import { DetailModal } from '@/components/dashboard/DetailModal';
+import { OpportunityCard } from '@/components/dashboard/OpportunityCard';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { StatsCard } from '@/components/dashboard/StatsCard';
-import { OpportunityCard } from '@/components/dashboard/OpportunityCard';
-import { DetailModal } from '@/components/dashboard/DetailModal';
+import { opportunities as marketplaceOpportunities, type Opportunity } from '@/lib/opportunities';
 
 export default function AmasokoHubDashboard() {
   const [activeTab, setActiveTab] = useState('all');
@@ -19,25 +25,9 @@ export default function AmasokoHubDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [viewMode, setViewMode] = useState('grid');
-
-  interface Opportunity {
-    id: number;
-    title: string;
-    institution: string;
-    institutionType: string;
-    category: string;
-    type: string;
-    budget?: string;
-    salary?: string;
-    amount?: string;
-    deadline: string;
-    location: string;
-    status: string[];
-    description: string;
-    publishedDate: string;
-    applicants: number;
-    urgency: string;
-  }
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [savedIds, setSavedIds] = useState<number[]>([]);
 
   const stats = [
     { 
@@ -70,111 +60,17 @@ export default function AmasokoHubDashboard() {
     },
   ];
 
-  const opportunities = [
-    {
-      id: 1,
-      title: 'Construction of Kigali Convention Centre Extension Phase II',
-      institution: 'Ministry of Infrastructure',
-      institutionType: 'Government',
-      category: 'Infrastructure',
-      type: 'tender',
-      budget: 'RWF 2.4B',
-      deadline: '12 days left',
-      location: 'Kigali',
-      status: ['New', 'Verified'],
-      description: 'Expansion of existing conference facilities to accommodate larger international events.',
-      publishedDate: '2 days ago',
-      applicants: 45,
-      urgency: 'high'
-    },
-    {
-      id: 2,
-      title: 'Supply of Medical Equipment for District Hospitals',
-      institution: 'Rwanda Biomedical Centre',
-      institutionType: 'Government',
-      category: 'Healthcare',
-      type: 'tender',
-      budget: 'RWF 850M',
-      deadline: '5 days left',
-      location: 'Nationwide',
-      status: ['Verified', 'Closing Soon'],
-      description: 'Procurement of essential medical equipment for healthcare facilities nationwide.',
-      publishedDate: '5 days ago',
-      applicants: 67,
-      urgency: 'critical'
-    },
-    {
-      id: 3,
-      title: 'Senior Full-Stack Developer',
-      institution: 'MTN Rwanda',
-      institutionType: 'Private',
-      category: 'Technology',
-      type: 'job',
-      salary: 'RWF 3M - 5M/month',
-      deadline: '15 days left',
-      location: 'Kigali',
-      status: ['New', 'Remote Available'],
-      description: 'Lead development of next-generation mobile banking solutions.',
-      publishedDate: '1 day ago',
-      applicants: 124,
-      urgency: 'medium'
-    },
-    {
-      id: 4,
-      title: 'Agritech Startup Investment Opportunity',
-      institution: 'Rwanda Development Board',
-      institutionType: 'Government',
-      category: 'Agriculture & Investment',
-      type: 'investment',
-      amount: 'Up to $500K',
-      deadline: '30 days left',
-      location: 'Rwanda',
-      status: ['Verified', 'Featured'],
-      description: 'Equity investment in innovative agricultural technology startups.',
-      publishedDate: '3 days ago',
-      applicants: 23,
-      urgency: 'low'
-    },
-    {
-      id: 5,
-      title: 'Road Rehabilitation Project - Kigali to Huye Highway',
-      institution: 'Rwanda Transport Development Agency',
-      institutionType: 'Government',
-      category: 'Infrastructure',
-      type: 'tender',
-      budget: 'RWF 5.2B',
-      deadline: '45 days left',
-      location: 'Southern Province',
-      status: ['Verified'],
-      description: 'Major highway rehabilitation and modernization project.',
-      publishedDate: '1 week ago',
-      applicants: 34,
-      urgency: 'low'
-    },
-    {
-      id: 6,
-      title: 'Supply & Installation of Solar Power Systems',
-      institution: 'Rwanda Education Board',
-      institutionType: 'Government',
-      category: 'Education & Energy',
-      type: 'tender',
-      budget: 'RWF 320M',
-      deadline: '35 days left',
-      location: 'Western Province',
-      status: ['New', 'Verified'],
-      description: 'Renewable energy solutions for rural educational facilities.',
-      publishedDate: '2 days ago',
-      applicants: 29,
-      urgency: 'medium'
-    },
-  ];
+  const opportunities = marketplaceOpportunities;
 
   const filteredOpportunities = opportunities.filter(opp => {
-    if (activeTab === 'all') return true;
-    return opp.type === activeTab;
-  }).filter(opp => {
-    if (selectedCategory === 'all') return true;
-    return opp.category.toLowerCase().includes(selectedCategory.toLowerCase());
+    if (activeTab !== 'all' && opp.type !== activeTab) return false;
+    if (selectedCategory !== 'all' && !opp.category.toLowerCase().includes(selectedCategory.toLowerCase())) return false;
+    const query = searchQuery.trim().toLowerCase();
+    return !query || [opp.title, opp.institution, opp.category, opp.location].some(value => value.toLowerCase().includes(query));
+  }).sort((first, second) => {
+    if (sortBy === 'deadline') return Number.parseInt(first.deadline, 10) - Number.parseInt(second.deadline, 10);
+    if (sortBy === 'applicants') return second.applicants - first.applicants;
+    return first.id - second.id;
   });
 
   const categories = ['All', 'Infrastructure', 'Healthcare', 'Technology', 'Agriculture', 'Education', 'Energy'];
@@ -229,7 +125,10 @@ export default function AmasokoHubDashboard() {
                   <input 
                     type="text" 
                     placeholder="Search opportunities..." 
-                    className="w-full pl-10 pr-4 py-2 border border-[var(--border-light)] rounded-xl bg-[var(--light-bg)] text-sm focus:outline-none focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    aria-label="Search opportunities"
+                    className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-light)] rounded-xl bg-[var(--light-bg)] text-sm transition focus:outline-none focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
                   />
                 </div>
                 
@@ -282,6 +181,13 @@ export default function AmasokoHubDashboard() {
 
                 {/* View Controls */}
                 <div className="flex items-center gap-4 w-full md:w-auto">
+                  <label className="sr-only" htmlFor="opportunity-sort">Sort opportunities</label>
+                  <select id="opportunity-sort" value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="rounded-xl border border-[var(--border-light)] bg-[var(--light-bg)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]/20">
+                    <option value="newest">Newest first</option>
+                    <option value="deadline">Closing soon</option>
+                    <option value="applicants">Most applicants</option>
+                  </select>
+
                   {/* Category Filter */}
                   <div className="relative flex-1 w-full md:w-auto">
                     <select
@@ -316,6 +222,11 @@ export default function AmasokoHubDashboard() {
               </div>
             </div>
 
+            <div className="mb-4 flex items-center justify-between text-sm text-[var(--text-secondary)]">
+              <p aria-live="polite">Showing <span className="font-semibold text-[var(--primary-navy)]">{filteredOpportunities.length}</span> opportunities</p>
+              {savedIds.length > 0 && <p>{savedIds.length} saved</p>}
+            </div>
+
             {/* Opportunities List */}
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredOpportunities.map(opportunity => (
@@ -323,6 +234,8 @@ export default function AmasokoHubDashboard() {
                   key={opportunity.id}
                   opportunity={opportunity}
                   onViewDetails={() => setSelectedOpportunity(opportunity)}
+                  isSaved={savedIds.includes(opportunity.id)}
+                  onToggleSave={() => setSavedIds(current => current.includes(opportunity.id) ? current.filter(id => id !== opportunity.id) : [...current, opportunity.id])}
                 />
               ))}
             </div>
