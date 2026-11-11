@@ -19,6 +19,9 @@ export default function AmasokoHubDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [viewMode, setViewMode] = useState('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [savedIds, setSavedIds] = useState<number[]>([]);
 
   interface Opportunity {
     id: number;
@@ -170,11 +173,14 @@ export default function AmasokoHubDashboard() {
   ];
 
   const filteredOpportunities = opportunities.filter(opp => {
-    if (activeTab === 'all') return true;
-    return opp.type === activeTab;
-  }).filter(opp => {
-    if (selectedCategory === 'all') return true;
-    return opp.category.toLowerCase().includes(selectedCategory.toLowerCase());
+    if (activeTab !== 'all' && opp.type !== activeTab) return false;
+    if (selectedCategory !== 'all' && !opp.category.toLowerCase().includes(selectedCategory.toLowerCase())) return false;
+    const query = searchQuery.trim().toLowerCase();
+    return !query || [opp.title, opp.institution, opp.category, opp.location].some(value => value.toLowerCase().includes(query));
+  }).sort((first, second) => {
+    if (sortBy === 'deadline') return Number.parseInt(first.deadline) - Number.parseInt(second.deadline);
+    if (sortBy === 'applicants') return second.applicants - first.applicants;
+    return first.id - second.id;
   });
 
   const categories = ['All', 'Infrastructure', 'Healthcare', 'Technology', 'Agriculture', 'Education', 'Energy'];
@@ -229,7 +235,10 @@ export default function AmasokoHubDashboard() {
                   <input 
                     type="text" 
                     placeholder="Search opportunities..." 
-                    className="w-full pl-10 pr-4 py-2 border border-[var(--border-light)] rounded-xl bg-[var(--light-bg)] text-sm focus:outline-none focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    aria-label="Search opportunities"
+                    className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-light)] rounded-xl bg-[var(--light-bg)] text-sm transition focus:outline-none focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
                   />
                 </div>
                 
@@ -282,6 +291,13 @@ export default function AmasokoHubDashboard() {
 
                 {/* View Controls */}
                 <div className="flex items-center gap-4 w-full md:w-auto">
+                  <label className="sr-only" htmlFor="opportunity-sort">Sort opportunities</label>
+                  <select id="opportunity-sort" value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="rounded-xl border border-[var(--border-light)] bg-[var(--light-bg)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]/20">
+                    <option value="newest">Newest first</option>
+                    <option value="deadline">Closing soon</option>
+                    <option value="applicants">Most applicants</option>
+                  </select>
+
                   {/* Category Filter */}
                   <div className="relative flex-1 w-full md:w-auto">
                     <select
@@ -316,6 +332,11 @@ export default function AmasokoHubDashboard() {
               </div>
             </div>
 
+            <div className="mb-4 flex items-center justify-between text-sm text-[var(--text-secondary)]">
+              <p aria-live="polite">Showing <span className="font-semibold text-[var(--primary-navy)]">{filteredOpportunities.length}</span> opportunities</p>
+              {savedIds.length > 0 && <p>{savedIds.length} saved</p>}
+            </div>
+
             {/* Opportunities List */}
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredOpportunities.map(opportunity => (
@@ -323,6 +344,8 @@ export default function AmasokoHubDashboard() {
                   key={opportunity.id}
                   opportunity={opportunity}
                   onViewDetails={() => setSelectedOpportunity(opportunity)}
+                  isSaved={savedIds.includes(opportunity.id)}
+                  onToggleSave={() => setSavedIds(current => current.includes(opportunity.id) ? current.filter(id => id !== opportunity.id) : [...current, opportunity.id])}
                 />
               ))}
             </div>

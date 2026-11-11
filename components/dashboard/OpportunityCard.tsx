@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bookmark, Share2, Eye, DollarSign, MapPin, Calendar, User, Building2 } from 'lucide-react';
+import { Bookmark, Share2, Eye, DollarSign, MapPin, Calendar, User, Building2, Check } from 'lucide-react';
 
 interface OpportunityProps {
   opportunity: {
@@ -21,6 +21,8 @@ interface OpportunityProps {
     urgency: string;
   };
   onViewDetails: () => void;
+  isSaved: boolean;
+  onToggleSave: () => void;
 }
 
 const getUrgencyColor = (urgency: string) => {
@@ -33,7 +35,7 @@ const getUrgencyColor = (urgency: string) => {
 };
 
 const getStatusColor = (status: string) => {
-  const colors = {
+  const colors: Record<string, string> = {
     'New': 'bg-blue-100 text-blue-700',
     'Verified': 'bg-green-100 text-green-700',
     'Closing Soon': 'bg-red-100 text-red-700',
@@ -43,9 +45,9 @@ const getStatusColor = (status: string) => {
   return colors[status] || 'bg-gray-100 text-gray-700';
 };
 
-export const OpportunityCard: React.FC<OpportunityProps> = ({ opportunity, onViewDetails }) => {
+export const OpportunityCard: React.FC<OpportunityProps> = ({ opportunity, onViewDetails, isSaved, onToggleSave }) => {
   return (
-    <div className="group bg-white rounded-2xl border border-[var(--border-light)] hover:border-[var(--secondary-orange)] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden">
+    <article className="group bg-white rounded-2xl border border-[var(--border-light)] shadow-sm hover:border-[var(--secondary-orange)] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden focus-within:ring-2 focus-within:ring-[var(--secondary-orange)]/30">
       {/* Card Header with Gradient */}
       <div className="h-2 bg-gradient-to-r from-[var(--primary-navy)] via-[var(--primary-blue)] to-[var(--secondary-orange)]"></div>
       
@@ -132,14 +134,14 @@ export const OpportunityCard: React.FC<OpportunityProps> = ({ opportunity, onVie
             <Eye className="w-4 h-4" />
             View Details
           </button>
-          <button className="p-2.5 border border-[var(--border-light)] rounded-xl hover:bg-[var(--light-bg)] transition-colors">
-            <Bookmark className="w-5 h-5 text-[var(--text-secondary)]" />
+          <button onClick={onToggleSave} aria-label={isSaved ? 'Remove saved opportunity' : 'Save opportunity'} aria-pressed={isSaved} className={`p-2.5 border rounded-xl transition-colors ${isSaved ? 'border-[var(--secondary-orange)] bg-orange-50 text-[var(--secondary-orange)]' : 'border-[var(--border-light)] hover:bg-[var(--light-bg)] text-[var(--text-secondary)]'}`}>
+            {isSaved ? <Check className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
           </button>
-          <button className="p-2.5 border border-[var(--border-light)] rounded-xl hover:bg-[var(--light-bg)] transition-colors">
+          <button onClick={() => { if (navigator.share) void navigator.share({ title: opportunity.title, text: opportunity.description, url: window.location.href }); else void navigator.clipboard?.writeText(window.location.href); }} aria-label="Share opportunity" className="p-2.5 border border-[var(--border-light)] rounded-xl hover:bg-[var(--light-bg)] transition-colors">
             <Share2 className="w-5 h-5 text-[var(--text-secondary)]" />
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
