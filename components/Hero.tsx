@@ -32,12 +32,12 @@ const Hero: React.FC = () => {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="px-8 py-4 bg-[#E67E22] text-white font-semibold text-lg rounded-lg shadow-sm transition-all duration-300 hover:bg-[#D97311] hover:shadow-md hover:-translate-y-1">
-            <Link href={'/dashboard'}>Get Started</Link>
-          </button>
-          <button className="px-8 py-4 bg-white/15 text-white font-semibold text-lg rounded-lg shadow-sm backdrop-blur-sm border border-white/30 transition-all duration-300 hover:bg-white/25 hover:-translate-y-1">
+          <Link href="/dashboard" className="px-8 py-4 bg-[#E67E22] text-white font-semibold text-lg rounded-lg shadow-sm transition-all duration-300 hover:bg-[#D97311] hover:shadow-md hover:-translate-y-1">
+            Get Started
+          </Link>
+          <a href="/#about" className="px-8 py-4 bg-white/15 text-white font-semibold text-lg rounded-lg shadow-sm backdrop-blur-sm border border-white/30 transition-all duration-300 hover:bg-white/25 hover:-translate-y-1">
             Learn More
-          </button>
+          </a>
         </div>
       </div>
     </section>
