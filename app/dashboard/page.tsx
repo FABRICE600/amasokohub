@@ -63,7 +63,8 @@ export default function AmasokoHubDashboard() {
   const opportunities = marketplaceOpportunities;
 
   const filteredOpportunities = opportunities.filter(opp => {
-    if (activeTab !== 'all' && opp.type !== activeTab) return false;
+    if (activeTab === 'saved' && !savedIds.includes(opp.id)) return false;
+    if (activeTab !== 'all' && activeTab !== 'saved' && opp.type !== activeTab) return false;
     if (selectedCategory !== 'all' && !opp.category.toLowerCase().includes(selectedCategory.toLowerCase())) return false;
     const query = searchQuery.trim().toLowerCase();
     return !query || [opp.title, opp.institution, opp.category, opp.location].some(value => value.toLowerCase().includes(query));
@@ -80,7 +81,7 @@ export default function AmasokoHubDashboard() {
       {/* Mobile Header */}
       <header className="lg:hidden bg-white border-b border-[var(--border-light)] fixed top-0 left-0 right-0 z-40">
         <div className="flex items-center justify-between h-16 px-4">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-[var(--light-bg)]">
+          <button type="button" onClick={() => setSidebarOpen(true)} aria-label="Open dashboard navigation" aria-expanded={sidebarOpen} className="p-2 rounded-lg hover:bg-[var(--light-bg)]">
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
@@ -88,7 +89,7 @@ export default function AmasokoHubDashboard() {
             <span className="font-bold text-[var(--primary-navy)]">Amasoko Hub</span>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 rounded-lg hover:bg-[var(--light-bg)]">
+            <button type="button" aria-label="View notifications" onClick={() => document.getElementById('opportunities')?.scrollIntoView({ behavior: 'smooth' })} className="p-2 rounded-lg hover:bg-[var(--light-bg)]">
               <Bell className="w-5 h-5" />
             </button>
           </div>
@@ -98,7 +99,28 @@ export default function AmasokoHubDashboard() {
       {/* Main Layout */}
       <div className="flex">
         {/* Sidebar */}
-        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+              <Sidebar
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                onNavigate={destination => {
+                  if (destination === 'export') {
+                    const rows = opportunities.map(({ title, institution, type, location }) => [title, institution, type, location].map(value => `"${String(value).replaceAll('"', '""')}"`).join(','));
+                    const file = new Blob([['Title,Institution,Type,Location', ...rows].join('\n')], { type: 'text/csv;charset=utf-8' });
+                    const url = URL.createObjectURL(file);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'opportunities.csv';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  } else if (destination === 'profile' || destination === 'preferences') {
+                    document.getElementById('user-profile')?.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    if (destination !== 'alerts') setActiveTab(destination);
+                    document.getElementById('opportunities')?.scrollIntoView({ behavior: 'smooth' });
+                  }
+                  setSidebarOpen(false);
+                }}
+              />
 
         {/* Main Content */}
         <main className="flex-1 pt-16 lg:pt-0">
@@ -133,7 +155,7 @@ export default function AmasokoHubDashboard() {
                 </div>
                 
                 {/* Notifications */}
-                <button className="p-2 rounded-xl hover:bg-[var(--light-bg)] relative">
+                <button type="button" aria-label="View notifications" onClick={() => document.getElementById('opportunities')?.scrollIntoView({ behavior: 'smooth' })} className="p-2 rounded-xl hover:bg-[var(--light-bg)] relative">
                   <Bell className="w-5 h-5" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-[var(--warning-red)] rounded-full"></span>
                 </button>
@@ -228,7 +250,7 @@ export default function AmasokoHubDashboard() {
             </div>
 
             {/* Opportunities List */}
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            <div id="opportunities" className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredOpportunities.map(opportunity => (
                 <OpportunityCard
                   key={opportunity.id}
@@ -245,9 +267,11 @@ export default function AmasokoHubDashboard() {
 
       {/* Detail Modal */}
       {selectedOpportunity && (
-        <DetailModal 
-          opportunity={selectedOpportunity} 
-          onClose={() => setSelectedOpportunity(null)} 
+        <DetailModal
+          opportunity={selectedOpportunity}
+          onClose={() => setSelectedOpportunity(null)}
+          isSaved={savedIds.includes(selectedOpportunity.id)}
+          onToggleSave={() => setSavedIds(current => current.includes(selectedOpportunity.id) ? current.filter(id => id !== selectedOpportunity.id) : [...current, selectedOpportunity.id])}
         />
       )}
     </div>

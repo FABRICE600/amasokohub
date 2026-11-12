@@ -23,6 +23,8 @@ interface Opportunity {
 interface DetailModalProps {
   opportunity: Opportunity | null;
   onClose: () => void;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -36,7 +38,9 @@ const getStatusColor = (status: string) => {
   return colors[status] || 'bg-gray-100 text-gray-700';
 };
 
-export const DetailModal: React.FC<DetailModalProps> = ({ opportunity, onClose }) => {
+export const DetailModal: React.FC<DetailModalProps> = ({ opportunity, onClose, isSaved = false, onToggleSave }) => {
+  const [alertEnabled, setAlertEnabled] = React.useState(false);
+  const [applicationNotice, setApplicationNotice] = React.useState(false);
   if (!opportunity) return null;
 
   return (
@@ -53,7 +57,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ opportunity, onClose }
               <span className="text-sm">{opportunity.institutionType}</span>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[var(--light-bg)] rounded-xl transition-colors">
+          <button type="button" onClick={onClose} aria-label="Close opportunity details" className="p-2 hover:bg-[var(--light-bg)] rounded-xl transition-colors">
             <X className="w-6 h-6 text-[var(--text-primary)]" />
           </button>
         </div>
@@ -148,19 +152,21 @@ export const DetailModal: React.FC<DetailModalProps> = ({ opportunity, onClose }
             </div>
           </div>
 
+          {applicationNotice && <p role="status" className="rounded-xl bg-blue-50 p-4 text-sm text-blue-900">The publisher has not provided an application link for this opportunity yet. Contact {opportunity.institution} for application instructions.</p>}
+
           {/* Actions */}
           <div className="flex gap-3 pt-4">
-            <button className="flex-1 bg-[var(--secondary-orange)] hover:bg-[#D97311] text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30">
+            <button type="button" onClick={() => setApplicationNotice(true)} className="flex-1 bg-[var(--secondary-orange)] hover:bg-[#D97311] text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30">
               <ExternalLink className="w-5 h-5" />
               Apply Now
             </button>
-            <button className="px-6 py-4 border-2 border-[var(--border-light)] rounded-2xl font-semibold hover:bg-[var(--light-bg)] transition-colors flex items-center gap-2">
+            <button type="button" aria-pressed={isSaved} onClick={onToggleSave} className="px-6 py-4 border-2 border-[var(--border-light)] rounded-2xl font-semibold hover:bg-[var(--light-bg)] transition-colors flex items-center gap-2">
               <Bookmark className="w-5 h-5" />
-              Save
+              {isSaved ? 'Saved' : 'Save'}
             </button>
-            <button className="px-6 py-4 border-2 border-[var(--border-light)] rounded-2xl font-semibold hover:bg-[var(--light-bg)] transition-colors flex items-center gap-2">
+            <button type="button" aria-pressed={alertEnabled} onClick={() => setAlertEnabled(enabled => !enabled)} className="px-6 py-4 border-2 border-[var(--border-light)] rounded-2xl font-semibold hover:bg-[var(--light-bg)] transition-colors flex items-center gap-2">
               <Bell className="w-5 h-5" />
-              Alert
+              {alertEnabled ? 'Alert on' : 'Alert'}
             </button>
           </div>
         </div>
