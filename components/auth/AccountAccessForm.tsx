@@ -97,7 +97,10 @@ export function AccountAccessForm({ mode, verified = false }: AccountAccessFormP
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-600">{isRegister ? "Already have an account? " : "New to Amasoko Hub? "}<Link href={isRegister ? "/sign-in" : "/register"} className="font-semibold text-[#1B4965] underline underline-offset-4">{isRegister ? "Sign in" : "Create an account"}</Link></p>
-          <p className="mt-5 text-center text-xs text-slate-500">Administrator? <Link href="/admin/sign-in" className="font-medium underline underline-offset-4">Use administrator sign in</Link></p>
+          <p className="mt-5 text-center text-xs leading-5 text-slate-500">
+            {isRegister ? "For administrator access, register with the configured admin email and verify it. " : "Administrator? "}
+            <Link href="/admin/sign-in" className="font-medium underline underline-offset-4">{isRegister ? "Administrator sign in" : "Use administrator sign in"}</Link>
+          </p>
         </>
       )}
     </section>

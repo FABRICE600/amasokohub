@@ -83,15 +83,17 @@ export async function signUpAccount(
   const email = readEmail(formData);
   const name = String(formData.get("name") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  if (
-    !validEmail(email) ||
-    isAllowedAdminEmail(email) ||
-    name.length < 2 ||
-    name.length > 80 ||
-    password.length < 12 ||
-    password.length > 128
-  ) {
-    return { error: accountError };
+  if (!validEmail(email)) {
+    return { error: "Enter a valid email address." };
+  }
+  if (name.length < 2 || name.length > 80) {
+    return { error: "Enter a name between 2 and 80 characters." };
+  }
+  if (password.length < 12) {
+    return { error: "Choose a password with at least 12 characters." };
+  }
+  if (password.length > 128) {
+    return { error: "Password must be no more than 128 characters." };
   }
 
   try {
