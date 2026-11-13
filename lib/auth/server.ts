@@ -1,17 +1,29 @@
+import { createHmac } from "node:crypto";
 import { createNeonAuth } from "@neon/auth/next/server";
 import { redirect } from "next/navigation";
 
 const baseUrl = process.env.NEON_AUTH_BASE_URL;
+const configuredCookieSecret = [
+  process.env.NEON_AUTH_COOKIE_SECRET,
+  process.env.BETTER_AUTH_SECRET,
+].find((secret) => secret && secret.length >= 32);
+const databaseUrl = process.env.DATABASE_URL;
+// Derive a purpose-specific key from Neon’s server-only credential when no long dedicated secret is configured.
 const cookieSecret =
-  process.env.NEON_AUTH_COOKIE_SECRET ?? process.env.BETTER_AUTH_SECRET;
+  configuredCookieSecret ??
+  (databaseUrl
+    ? createHmac("sha256", databaseUrl)
+        .update("amasoko-hub:neon-auth-cookie:v1")
+        .digest("hex")
+    : undefined);
 
 if (!baseUrl) {
   throw new Error("NEON_AUTH_BASE_URL is required to use Neon Auth.");
 }
 
-if (!cookieSecret || cookieSecret.length < 32) {
+if (!cookieSecret) {
   throw new Error(
-    "A Neon Auth cookie secret of at least 32 characters is required.",
+    "Neon Auth needs a 32+ character cookie secret or a configured Neon database URL.",
   );
 }
 
